@@ -124,3 +124,70 @@ public:
 	void setEnPassantVulnerable(bool val);
 };
 
+
+// ================================
+//  MOVE  
+// =================================
+struct Move {
+	int fromRow, fromCol;
+	int toRow, toCol;
+	Piece* pieceMoved;
+	Piece* pieceCaptured;   // nullptr if not capture
+	bool isCastling;
+	bool isEnPassant;
+	bool isPromotion;
+
+	Move();  // default constructor
+};
+
+
+// ===================================
+//  MOVE HISTORY 
+// =====================================
+class MoveHistory {
+private:
+	Move moves[300];  
+	int  count;
+
+public:
+	MoveHistory();
+
+	void addMove(Move m);
+	Move getLastMove() const;
+	int  getCount() const;
+	bool isEmpty() const;
+	void printHistory() const;
+};
+
+
+// ============================================
+//  BOARD
+// =============================================
+class Board {
+private:
+	Piece* grid[8][8];   // nullptr will mean empty sq
+
+public:
+	Board();
+	~Board();
+
+	// setup
+	void initBoard();
+
+	// accessing
+	Piece* getPiece(int row, int col) const;
+	void   setPiece(int row, int col, Piece* p);
+
+	// movement of piece
+	void movePiece(int fromRow, int fromCol, int toRow, int toCol);
+	bool isPathClear(int fromRow, int fromCol, int toRow, int toCol) const;
+
+	// Display 
+	void display() const;
+
+	  
+	bool isUnderAttack(int row, int col, int byColor) const;
+	void findKing(int color, int& row, int& col) const;
+};
+
+#endif 
