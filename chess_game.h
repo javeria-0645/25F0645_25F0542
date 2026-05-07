@@ -27,7 +27,30 @@ public:
 	// Ask the player to type a move to fills fromRow/Col and toRow/Col
 	void getInput(int& fromRow, int& fromCol,int& toRow, int& toCol) const;
 };
+// ============================================================
+//  GAME
+// ============================================================
+class Game {
+private:
+	Board       board;
+	Player      players[2];
+	MoveHistory history;
+	int         currentTurn;   // 0 = White's turn,  1 = Black's turn
+	bool isInCheck(int color) const;
+	// Simulates a move, checks if it leaves own king in check, undoes it
+	bool wouldLeaveKingInCheck(int fromRow, int fromCol,int toRow, int toCol,int color);
+	// Returns true if 'color' has zero legal moves left
+	bool hasNoLegalMoves(int color);
+	// Checks if the game is over — checkmate or stalemate
+	int  checkGameOver();
+	// Special move handlers
+	void executeCastling(int fromRow, int fromCol,int toRow, int toCol);
+	bool isCastlingMove(int fromRow, int fromCol,int toRow, int toCol) const;
 
+	void executeEnPassant(int fromRow, int fromCol,int toRow, int toCol);
+	bool isEnPassantMove(int fromRow, int fromCol,int toRow, int toCol) const;
+
+	void handlePawnPromotion(int row, int col);
 
 
 
