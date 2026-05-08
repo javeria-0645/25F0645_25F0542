@@ -51,9 +51,30 @@ private:
 	bool isEnPassantMove(int fromRow, int fromCol,int toRow, int toCol) const;
 
 	void handlePawnPromotion(int row, int col);
+// Clears en passant flags for all pawns of a color
+	void clearEnPassantFlags(int color);
 
+	// Validates input and checks full legality of a move
+	bool isLegalMove(int fromRow, int fromCol,
+		int toRow, int toCol,
+		int color);
 
+	// Switches turn from 0 to 1 or 1 to 0
+	void switchTurn();
 
+	// Prints a simple status line showing whose turn it is
+	void printStatus() const;
+
+public:
+	Game();
+
+	// Sets  names for both players
+	void setup();
+
+	//  runs until checkmate or stalemate
+	void run();
+
+};
 
 
 
