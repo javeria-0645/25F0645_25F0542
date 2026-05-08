@@ -391,3 +391,138 @@ return false;
 
 return true;
 }
+//  switchTurn [FUNCTION]
+void Game::switchTurn() {
+ currentTurn = (currentTurn == 0) ? 1 : 0;
+}
+
+//  printStatus [FUNCTION]
+void Game::printStatus() const {
+cout << "----------------------------------------\n";
+cout << "  Turn " << (history.getCount() + 1) << " - "<< players[currentTurn].getName()
+<< " (" << (currentTurn == 0 ? "White" : "Black") << ")\n";
+
+if (isInCheck(currentTurn))
+cout << "  *** CHECK! Your king is under attack ***\n";
+
+cout << "----------------------------------------\n";
+}
+// ==========================================
+//  GAME  public methods
+// ==========================================
+
+Game::Game() {
+currentTurn = 0;  // White always goes first
+}
+
+//  setup [FUNCTION]
+void Game::setup() {
+char name[50];
+
+cout << "\n========================================\n";
+cout << "           Welcome to Chess!\n";
+cout << "========================================\n\n";
+
+cout << "Enter name for White player: ";
+cin >> name;
+players[0] = Player(name, 0);
+
+cout << "Enter name for Black player: ";
+cin >> name;
+players[1] = Player(name, 1);
+
+cout << "\nGreat! " << players[0].getName()<< " (White) vs " << players[1].getName()<< " (Black)\n";
+cout << "White moves first.\n\n";
+
+board.initBoard();
+}
+//  run [FUNCTION]
+//  main game loop Keeps running until checkmate or stalemate
+void Game::run() {
+board.display();
+
+while (true) {
+
+clearEnPassantFlags(currentTurn);
+printStatus();
+int fromRow, fromCol, toRow, toCol;
+players[currentTurn].getInput(fromRow, fromCol, toRow, toCol);
+bool special = false;
+ if (isCastlingMove(fromRow, fromCol, toRow, toCol)) {
+      executeCastling(fromRow, fromCol, toRow, toCol);
+      special = true;
+}
+  else if (isEnPassantMove(fromRow, fromCol, toRow, toCol)) {
+     executeEnPassant(fromRow, fromCol, toRow, toCol);
+     special = true;
+}
+
+if (!special) {
+// Validate the normal move
+    if (!isLegalMove(fromRow, fromCol, toRow, toCol, currentTurn)) {
+        continue;
+}
+// Execute the move
+board.movePiece(fromRow, fromCol, toRow, toCol);
+// Record hasMoved flags for King and Rook (needed for castling)
+Piece* moved = board.getPiece(toRow, toCol);
+if (moved != nullptr) {
+King* k = dynamic_cast<King*>(moved);
+if (k) k->setHasMoved(true);
+
+Rook* r = dynamic_cast<Rook*>(moved);
+if (r) r->setHasMoved(true);
+
+// Set en passant flag if pawn moved 2 squares
+Pawn* pw = dynamic_cast<Pawn*>(moved);
+if (pw) {
+pw->setHasMoved(true);
+int rowDiff = toRow - fromRow;
+if (rowDiff == 2 || rowDiff == -2)
+pw->setEnPassantVulnerable(true);
+}
+}
+}
+
+// Record the move in history
+Move m;
+m.fromRow = fromRow;
+m.fromCol = fromCol;
+m.toRow = toRow; 
+m.toCol = toCol;
+m.isCastling = isCastlingMove(fromRow, fromCol, toRow, toCol);
+m.isEnPassant = isEnPassantMove(fromRow, fromCol, toRow, toCol);
+history.addMove(m);
+
+// Check for pawn promotion
+handlePawnPromotion(toRow, toCol);
+
+// Show the updated board
+board.display();
+// Check if the game is over
+int result = checkGameOver();
+
+if (result == 1) {
+// Checkmate
+cout << "\n========================================\n";
+cout << "           CHECKMATE!\n";
+cout << "  " << players[currentTurn].getName()
+<< " (" << (currentTurn == 0 ? "White" : "Black")
+<< ") wins!\n";
+cout << "========================================\n\n";
+history.printHistory();
+break;
+}
+else if (result == 2) {
+// Stalemate
+cout << "\n========================================\n";
+cout << "             STALEMATE!\n";
+cout << "         The game is a draw.\n";
+cout << "========================================\n\n";
+history.printHistory();
+break;
+}
+// Switch to other player
+switchTurn();
+}
+}
