@@ -283,12 +283,111 @@ return adjPawn->getEnPassantVulnerable();
 void Game::executeEnPassant(int fromRow, int fromCol,int toRow, int toCol) {
 
 board.movePiece(fromRow, fromCol, toRow, toCol);
-
 Piece* captured = board.getPiece(fromRow, toCol);
   if (captured != nullptr) {
      delete captured;
      board.setPiece(fromRow, toCol, nullptr);
 }
-
 cout << "  En passant capture!\n";
+}
+
+//  handlePawnPromotion [FUNCTION]
+// If a pawn reached the last rank, ask the player what to promote to
+void Game::handlePawnPromotion(int row, int col) {
+Piece* p = board.getPiece(row, col);
+ if (p == nullptr) 
+	 return;
+
+Pawn* pawn = dynamic_cast<Pawn*>(p);
+ if (pawn == nullptr)
+	 return;
+
+int color = p->getColor();
+
+// White promotes at row 0, Black promotes at row 7
+ if ((color == 0 && row != 0) || (color == 1 && row != 7))
+	 return;
+
+cout << "\n  Pawn promotion! Choose piece:\n";
+cout << "  Q = Queen   R = Rook\n";
+cout << "  B = Bishop  N = Knight\n";
+cout << "  Enter choice: ";
+
+char choice;
+cin >> choice;
+
+// Remove  pawn
+delete board.getPiece(row, col);
+board.setPiece(row, col, nullptr);
+
+// Place new piece
+Piece* newPiece = nullptr;
+ if (choice == 'Q' || choice == 'q') 
+	 newPiece = new Queen(color, row, col);
+ else if (choice == 'R' || choice == 'r')
+	 newPiece = new Rook(color, row, col);
+ else if (choice == 'B' || choice == 'b') 
+	 newPiece = new Bishop(color, row, col);
+ else if (choice == 'N' || choice == 'n')
+	 newPiece = new Knight(color, row, col);
+ else {
+ cout << "  Invalid choice. Promoting to Queen by default.\n";
+newPiece = new Queen(color, row, col);
+}
+
+board.setPiece(row, col, newPiece);
+cout << "  Pawn promoted!\n";
+}
+//  clearEnPassantFlags [FUNCTION]
+// En passant is only valid for ONE turn.
+// This clears the flag on all pawns of the given color
+// at the START of that color's next turn.
+void Game::clearEnPassantFlags(int color) {
+ for (int r = 0; r < 8; r++) {
+    for (int c = 0; c < 8; c++) {
+       Piece* p = board.getPiece(r, c);
+       if (p == nullptr || p->getColor() != color) 
+		   continue;
+
+Pawn* pawn = dynamic_cast<Pawn*>(p);
+if (pawn != nullptr)
+pawn->setEnPassantVulnerable(false);
+   }
+ }
+}
+//  isLegalMove [FUNCTION]
+//it checks Validate move: exists, belongs to player, legal per piece rules, and keeps king safe.
+bool Game::isLegalMove(int fromRow, int fromCol,
+int toRow, int toCol,
+int color) {
+Piece* p = board.getPiece(fromRow, fromCol);
+
+if (p == nullptr) {
+cout << "  No piece at that square.\n";
+return false;
+}
+
+if (p->getColor() != color) {
+cout << "  That is not your piece.\n";
+return false;
+}
+
+Piece* grid[8][8];
+for (int r = 0; r < 8; r++)
+for (int c = 0; c < 8; c++)
+grid[r][c] = board.getPiece(r, c);
+
+if (!p->isValidMove(toRow, toCol, grid)) {
+if (!isCastlingMove(fromRow, fromCol, toRow, toCol) &&!isEnPassantMove(fromRow, fromCol, toRow, toCol)) {
+cout << "  Illegal move for that piece.\n";
+return false;
+}
+}
+
+if (wouldLeaveKingInCheck(fromRow, fromCol, toRow, toCol, color)) {
+cout << "  That move would leave your king in check!\n";
+return false;
+}
+
+return true;
 }
